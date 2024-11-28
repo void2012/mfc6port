@@ -11,6 +11,7 @@
 #ifndef __ATLBASE_H__
 #define __ATLBASE_H__
 
+#include <winnt.h>
 #ifndef __cplusplus
 	#error ATL requires C++ compilation (use a .cpp suffix)
 #endif
@@ -420,260 +421,114 @@ class _NoAddRefReleaseOnCComPtr : public T
 		STDMETHOD_(ULONG, Release)()=0;
 };
 
+//CComPtrBase provides the basis for all other smart pointers
+//The other smartpointers add their own constructors and operators
 template <class T>
-class CComPtr
+class CComPtrBase
 {
-public:
-	typedef T _PtrClass;
-	CComPtr()
+protected:
+	CComPtrBase() throw()
 	{
-		p=NULL;
-	}
-	CComPtr(T* lp)
-	{
-		if ((p = lp) != NULL)
-			p->AddRef();
-	}
-	CComPtr(const CComPtr<T>& lp)
-	{
-		if ((p = lp.p) != NULL)
-			p->AddRef();
-	}
-	~CComPtr()
-	{
-		if (p)
-			p->Release();
-	}
-	void Release()
-	{
-		IUnknown* pTemp = p;
-		if (pTemp)
-		{
-			p = NULL;
-			pTemp->Release();
-		}
-	}
-	operator T*() const
-	{
-		return (T*)p;
-	}
-	T& operator*() const
-	{
-		ATLASSERT(p!=NULL);
-		return *p;
-	}
-	//The assert on operator& usually indicates a bug.  If this is really
-	//what is needed, however, take the address of the p member explicitly.
-	T** operator&()
-	{
-		ATLASSERT(p==NULL);
-		return &p;
-	}
-	_NoAddRefReleaseOnCComPtr<T>* operator->() const
-	{
-		ATLASSERT(p!=NULL);
-		return (_NoAddRefReleaseOnCComPtr<T>*)p;
-	}
-	T* operator=(T* lp)
-	{
-		return (T*)AtlComPtrAssign((IUnknown**)&p, lp);
-	}
-	T* operator=(const CComPtr<T>& lp)
-	{
-		return (T*)AtlComPtrAssign((IUnknown**)&p, lp.p);
-	}
-	bool operator!() const
-	{
-		return (p == NULL);
-	}
-	bool operator<(T* pT) const
-	{
-		return p < pT;
-	}
-	bool operator==(T* pT) const
-	{
-		return p == pT;
-	}
-	// Compare two objects for equivalence
-	bool IsEqualObject(IUnknown* pOther)
-	{
-		if (p == NULL && pOther == NULL)
-			return true; // They are both NULL objects
-
-		if (p == NULL || pOther == NULL)
-			return false; // One is NULL the other is not
-
-		CComPtr<IUnknown> punk1;
-		CComPtr<IUnknown> punk2;
-		p->QueryInterface(IID_IUnknown, (void**)&punk1);
-		pOther->QueryInterface(IID_IUnknown, (void**)&punk2);
-		return punk1 == punk2;
-	}
-	void Attach(T* p2)
-	{
-		if (p)
-			p->Release();
-		p = p2;
-	}
-	T* Detach()
-	{
-		T* pt = p;
 		p = NULL;
-		return pt;
 	}
-	HRESULT CopyTo(T** ppT)
+	CComPtrBase( int nNull) throw()
 	{
-		ATLASSERT(ppT != NULL);
-		if (ppT == NULL)
-			return E_POINTER;
-		*ppT = p;
-		if (p)
+		ATLASSERT(nNull == 0);
+		(void)nNull;
+		p = NULL;
+	}
+	CComPtrBase( T* lp) throw()
+	{
+		p = lp;
+		if (p != NULL)
 			p->AddRef();
-		return S_OK;
 	}
-	HRESULT SetSite(IUnknown* punkParent)
-	{
-		return AtlSetChildSite(p, punkParent);
-	}
-	HRESULT Advise(IUnknown* pUnk, const IID& iid, LPDWORD pdw)
-	{
-		return AtlAdvise(p, pUnk, iid, pdw);
-	}
-	HRESULT CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
-	{
-		ATLASSERT(p == NULL);
-		return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-	}
-	HRESULT CoCreateInstance(LPCOLESTR szProgID, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
-	{
-		CLSID clsid;
-		HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
-		ATLASSERT(p == NULL);
-		if (SUCCEEDED(hr))
-			hr = ::CoCreateInstance(clsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-		return hr;
-	}
-	template <class Q>
-	HRESULT QueryInterface(Q** pp) const
-	{
-		ATLASSERT(pp != NULL && *pp == NULL);
-		return p->QueryInterface(__uuidof(Q), (void**)pp);
-	}
-	T* p;
-};
-
-
-template <class T, const IID* piid = &__uuidof(T)>
-class CComQIPtr
-{
+	void Swap(CComPtrBase& other)
+    {
+        T* pTemp = p;
+        p = other.p;
+        other.p = pTemp;
+    }
 public:
 	typedef T _PtrClass;
-	CComQIPtr()
-	{
-		p=NULL;
-	}
-	CComQIPtr(T* lp)
-	{
-		if ((p = lp) != NULL)
-			p->AddRef();
-	}
-	CComQIPtr(const CComQIPtr<T,piid>& lp)
-	{
-		if ((p = lp.p) != NULL)
-			p->AddRef();
-	}
-	CComQIPtr(IUnknown* lp)
-	{
-		p=NULL;
-		if (lp != NULL)
-			lp->QueryInterface(*piid, (void **)&p);
-	}
-	~CComQIPtr()
+	~CComPtrBase() throw()
 	{
 		if (p)
 			p->Release();
 	}
-	void Release()
-	{
-		IUnknown* pTemp = p;
-		if (pTemp)
-		{
-			p = NULL;
-			pTemp->Release();
-		}
-	}
-	operator T*() const
+	operator T*() const throw()
 	{
 		return p;
 	}
 	T& operator*() const
 	{
-		ATLASSERT(p!=NULL); return *p;
+		ATLENSURE(p!=NULL);
+		return *p;
 	}
 	//The assert on operator& usually indicates a bug.  If this is really
 	//what is needed, however, take the address of the p member explicitly.
-	T** operator&()
+	T** operator&() throw()
 	{
 		ATLASSERT(p==NULL);
 		return &p;
 	}
-	_NoAddRefReleaseOnCComPtr<T>* operator->() const
+	_NoAddRefReleaseOnCComPtr<T>* operator->() const throw()
 	{
 		ATLASSERT(p!=NULL);
 		return (_NoAddRefReleaseOnCComPtr<T>*)p;
 	}
-	T* operator=(T* lp)
-	{
-		return (T*)AtlComPtrAssign((IUnknown**)&p, lp);
-	}
-	T* operator=(const CComQIPtr<T,piid>& lp)
-	{
-		return (T*)AtlComPtrAssign((IUnknown**)&p, lp.p);
-	}
-	T* operator=(IUnknown* lp)
-	{
-		return (T*)AtlComQIPtrAssign((IUnknown**)&p, lp, *piid);
-	}
-	bool operator!() const
+	bool operator!() const throw()
 	{
 		return (p == NULL);
 	}
-	bool operator<(T* pT) const
+	bool operator<( T* pT) const throw()
 	{
 		return p < pT;
 	}
-	bool operator==(T* pT) const
+	bool operator!=( T* pT) const
+	{
+		return !operator==(pT);
+	}
+	bool operator==( T* pT) const throw()
 	{
 		return p == pT;
 	}
-	// Compare two objects for equivalence
-	bool IsEqualObject(IUnknown* pOther)
+
+	// Release the interface and set to NULL
+	void Release() throw()
 	{
-		if (p == NULL && pOther == NULL)
-			return true; // They are both NULL objects
-
-		if (p == NULL || pOther == NULL)
-			return false; // One is NULL the other is not
-
-		CComPtr<IUnknown> punk1;
-		CComPtr<IUnknown> punk2;
-		p->QueryInterface(IID_IUnknown, (void**)&punk1);
-		pOther->QueryInterface(IID_IUnknown, (void**)&punk2);
-		return punk1 == punk2;
+		T* pTemp = p;
+		if (pTemp)
+		{
+			p = NULL;
+			pTemp->Release();
+		}
 	}
-	void Attach(T* p2)
+	// Compare two objects for equivalence
+	bool IsEqualObject( IUnknown* pOther) throw()
+	{ CComPtrBase_IsEqualObject(this, pOther); }
+	
+	// Attach to an existing interface (does not AddRef)
+	void Attach( T* p2) throw()
 	{
 		if (p)
-			p->Release();
-		p = p2;
+        {
+            ULONG ref = p->Release();
+            (void) ref;
+            // Attaching to the same object only works if duplicate references are being coalesced.  Otherwise
+            // re-attaching will cause the pointer to be released and may cause a crash on a subsequent dereference.
+            ATLASSERT(ref != 0 || p2 != p);
+        }
+        p = p2;
 	}
-	T* Detach()
+	// Detach the interface (does not Release)
+	T* Detach() throw()
 	{
 		T* pt = p;
 		p = NULL;
 		return pt;
 	}
-	HRESULT CopyTo(T** ppT)
+	HRESULT CopyTo(T** ppT) throw()
 	{
 		ATLASSERT(ppT != NULL);
 		if (ppT == NULL)
@@ -683,20 +538,20 @@ public:
 			p->AddRef();
 		return S_OK;
 	}
-	HRESULT SetSite(IUnknown* punkParent)
+	HRESULT SetSite( IUnknown* punkParent) throw()
 	{
 		return AtlSetChildSite(p, punkParent);
 	}
-	HRESULT Advise(IUnknown* pUnk, const IID& iid, LPDWORD pdw)
+	HRESULT Advise( IUnknown* pUnk,  const IID& iid,  LPDWORD pdw) throw()
 	{
 		return AtlAdvise(p, pUnk, iid, pdw);
 	}
-	HRESULT CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
+	HRESULT CoCreateInstance( REFCLSID rclsid,  LPUNKNOWN pUnkOuter = NULL,  DWORD dwClsContext = CLSCTX_ALL) throw()
 	{
 		ATLASSERT(p == NULL);
 		return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
 	}
-	HRESULT CoCreateInstance(LPCOLESTR szProgID, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
+	HRESULT CoCreateInstance( LPCOLESTR szProgID,  LPUNKNOWN pUnkOuter = NULL,  DWORD dwClsContext = CLSCTX_ALL) throw()
 	{
 		CLSID clsid;
 		HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
@@ -706,153 +561,382 @@ public:
 		return hr;
 	}
 	template <class Q>
-	HRESULT QueryInterface(Q** pp)
+	HRESULT QueryInterface( Q** pp) const
 	{
-		ATLASSERT(pp != NULL && *pp == NULL);
+		ATLASSERT(pp != NULL);
 		return p->QueryInterface(__uuidof(Q), (void**)pp);
 	}
 	T* p;
+};
+
+template <class T>
+class CComPtr : public CComPtrBase<T>
+{
+public:
+	CComPtr() throw()
+	{
+	}
+	CComPtr(int nNull) throw() :
+		CComPtrBase<T>(nNull)
+	{
+	}
+	CComPtr(T* lp) throw() :
+		CComPtrBase<T>(lp)
+
+	{
+	}
+	CComPtr(_In_ const CComPtr<T>& lp) throw() :
+		CComPtrBase<T>(lp.p)
+	{
+	}
+	T* operator=(T* lp) throw()
+	{
+        if(this->p!=lp)
+        {
+            CComPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+	template <typename Q>
+	T* operator=(const CComPtr<Q>& lp) throw()
+	{
+        if(!this->IsEqualObject(lp) )
+        {
+            AtlComQIPtrAssign2((IUnknown**)&this->p, lp, __uuidof(T));
+        }
+        return *this;
+	}
+	T* operator=(const CComPtr<T>& lp) throw()
+	{
+        if(this->p!=lp.p)
+        {
+            CComPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+
+	#ifdef __cpp_rvalue_references
+	CComPtr( CComPtr<T>&& lp) throw() :
+        CComPtrBase<T>()
+    {
+        lp.Swap(*this);
+    }
+    T* operator=(CComPtr<T>&& lp) throw()
+    {
+        if (this->p!=lp.p)
+        {
+            CComPtr(static_cast<CComPtr&&>(lp)).Swap(*this);
+        }
+        return *this;
+    }
+	#endif
+};
+
+template<typename T>
+bool CComPtrBase_IsEqualObject(CComPtrBase<T>* _this, IUnknown* pOther) throw()
+{
+	if (_this->p == NULL && pOther == NULL)
+		return true;	// They are both NULL objects
+
+	if (_this->p == NULL || pOther == NULL)
+		return false;	// One is NULL the other is not
+
+	CComPtr<IUnknown> punk1;
+	CComPtr<IUnknown> punk2;
+	_this->p->QueryInterface(__uuidof(IUnknown), (void**)&punk1);
+	pOther->QueryInterface(__uuidof(IUnknown), (void**)&punk2);
+	return punk1 == punk2;
+}
+
+template <>
+class CComPtr<IDispatch> : public CComPtrBase<IDispatch>
+{
+public:
+	CComPtr() throw()
+	{
+	}
+	CComPtr(IDispatch* lp) throw() :
+		CComPtrBase<IDispatch>(lp)
+	{
+	}
+	CComPtr(const CComPtr<IDispatch>& lp) throw() :
+		CComPtrBase<IDispatch>(lp.p)
+	{
+	}
+	IDispatch* operator=(IDispatch* lp) throw()
+	{
+        if(this->p!=lp)
+        {
+            CComPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+	IDispatch* operator=(const CComPtr<IDispatch>& lp) throw()
+	{
+        if(this->p!=lp.p)
+        {
+            CComPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+
+	#ifdef __cpp_rvalue_references
+	CComPtr(_Inout_ CComPtr<IDispatch>&& lp) throw() :
+        CComPtrBase<IDispatch>()
+    {
+        this->p = lp.p;
+        lp.p = NULL;
+    }
+    IDispatch* operator=(_Inout_ CComPtr<IDispatch>&& lp) throw()
+    {
+        CComPtr(static_cast<CComPtr&&>(lp)).Swap(*this);
+        return *this;
+    }
+	#endif
+
+// IDispatch specific stuff
+	HRESULT GetPropertyByName(LPCOLESTR lpsz, VARIANT* pVar) throw()
+	{
+		ATLASSERT(p);
+		ATLASSERT(pVar);
+		DISPID dwDispID;
+		HRESULT hr = GetIDOfName(lpsz, &dwDispID);
+		if (SUCCEEDED(hr))
+			hr = GetProperty(dwDispID, pVar);
+		return hr;
+	}
+	HRESULT GetProperty(DISPID dwDispID, VARIANT* pVar) throw()
+	{
+		return GetProperty(p, dwDispID, pVar);
+	}
+	HRESULT PutPropertyByName(LPCOLESTR lpsz, VARIANT* pVar) throw()
+	{
+		ATLASSERT(p);
+		ATLASSERT(pVar);
+		DISPID dwDispID;
+		HRESULT hr = GetIDOfName(lpsz, &dwDispID);
+		if (SUCCEEDED(hr))
+			hr = PutProperty(dwDispID, pVar);
+		return hr;
+	}
+	HRESULT PutProperty(DISPID dwDispID, VARIANT* pVar) throw()
+	{
+		return PutProperty(p, dwDispID, pVar);
+	}
+	HRESULT GetIDOfName(LPCOLESTR lpsz, DISPID* pdispid) throw()
+	{
+		return p->GetIDsOfNames(IID_NULL, const_cast<LPOLESTR*>(&lpsz), 1, LOCALE_USER_DEFAULT, pdispid);
+	}
+	// Invoke a method by DISPID with no parameters
+	HRESULT Invoke0(DISPID dispid, VARIANT* pvarRet = NULL) throw()
+	{
+		DISPPARAMS dispparams = { NULL, NULL, 0, 0};
+		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
+	}
+	// Invoke a method by name with no parameters
+	HRESULT Invoke0(LPCOLESTR lpszName, VARIANT* pvarRet = NULL) throw()
+	{
+		HRESULT hr;
+		DISPID dispid;
+		hr = GetIDOfName(lpszName, &dispid);
+		if (SUCCEEDED(hr))
+			hr = Invoke0(dispid, pvarRet);
+		return hr;
+	}
+	// Invoke a method by DISPID with a single parameter
+	HRESULT Invoke1(DISPID dispid, VARIANT* pvarParam1, VARIANT* pvarRet = NULL) throw()
+	{
+		DISPPARAMS dispparams = { pvarParam1, NULL, 1, 0};
+		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
+	}
+	// Invoke a method by name with a single parameter
+	HRESULT Invoke1(LPCOLESTR lpszName, VARIANT* pvarParam1, VARIANT* pvarRet = NULL) throw()
+	{
+		HRESULT hr;
+		DISPID dispid;
+		hr = GetIDOfName(lpszName, &dispid);
+		if (SUCCEEDED(hr))
+			hr = Invoke1(dispid, pvarParam1, pvarRet);
+		return hr;
+	}
+	// Invoke a method by DISPID with two parameters
+	HRESULT Invoke2(DISPID dispid, VARIANT* pvarParam1, VARIANT* pvarParam2, VARIANT* pvarRet = NULL) throw();
+	// Invoke a method by name with two parameters
+	HRESULT Invoke2(LPCOLESTR lpszName, VARIANT* pvarParam1, VARIANT* pvarParam2, VARIANT* pvarRet = NULL) throw()
+	{
+		HRESULT hr;
+		DISPID dispid;
+		hr = GetIDOfName(lpszName, &dispid);
+		if (SUCCEEDED(hr))
+			hr = Invoke2(dispid, pvarParam1, pvarParam2, pvarRet);
+		return hr;
+	}
+	// Invoke a method by DISPID with N parameters
+	HRESULT InvokeN(DISPID dispid, VARIANT* pvarParams, int nParams, VARIANT* pvarRet = NULL) throw()
+	{
+		DISPPARAMS dispparams = { pvarParams, NULL, static_cast<UINT>(nParams), 0};
+		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
+	}
+	// Invoke a method by name with Nparameters
+	HRESULT InvokeN(LPCOLESTR lpszName, VARIANT* pvarParams, int nParams, VARIANT* pvarRet = NULL) throw()
+	{
+		HRESULT hr;
+		DISPID dispid;
+		hr = GetIDOfName(lpszName, &dispid);
+		if (SUCCEEDED(hr))
+			hr = InvokeN(dispid, pvarParams, nParams, pvarRet);
+		return hr;
+	}
+	static HRESULT PutProperty(IDispatch* p, DISPID dwDispID, VARIANT* pVar) throw()
+	{
+		ATLASSERT(p);
+		ATLASSERT(pVar != NULL);
+		if (pVar == NULL)
+			return E_POINTER;
+		
+		if(p == NULL)
+			return E_INVALIDARG;
+		
+		ATLTRACE(atlTraceCOM, 2, _T("CPropertyHelper::PutProperty\n"));
+		DISPPARAMS dispparams = {NULL, NULL, 1, 1};
+		dispparams.rgvarg = pVar;
+		DISPID dispidPut = DISPID_PROPERTYPUT;
+		dispparams.rgdispidNamedArgs = &dispidPut;
+
+		if (pVar->vt == VT_UNKNOWN || pVar->vt == VT_DISPATCH || 
+			(pVar->vt & VT_ARRAY) || (pVar->vt & VT_BYREF))
+		{
+			HRESULT hr = p->Invoke(dwDispID, IID_NULL,
+				LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUTREF,
+				&dispparams, NULL, NULL, NULL);
+			if (SUCCEEDED(hr))
+				return hr;
+		}
+		return p->Invoke(dwDispID, IID_NULL,
+				LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+				&dispparams, NULL, NULL, NULL);
+	}
+	static HRESULT GetProperty(IDispatch* p, DISPID dwDispID, VARIANT* pVar) throw()
+	{
+		ATLASSERT(p);
+		ATLASSERT(pVar != NULL);
+		if (pVar == NULL)
+			return E_POINTER;
+		
+		if(p == NULL)
+			return E_INVALIDARG;
+			
+		ATLTRACE(atlTraceCOM, 2, _T("CPropertyHelper::GetProperty\n"));
+		DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+		return p->Invoke(dwDispID, IID_NULL,
+				LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+				&dispparamsNoArgs, pVar, NULL, NULL);
+	}
+};
+
+template <class T, const IID* piid = &__uuidof(T)>
+class CComQIPtr : public CComPtr<T>
+{
+public:
+	CComQIPtr() throw()
+	{
+	}
+	#ifdef _NATIVE_NULLPTR_SUPPORTED
+	CComQIPtr(std::nullptr_t) throw()
+	{
+	}
+	#endif
+	CComQIPtr(T* lp) throw() :
+		CComPtr<T>(lp)
+	{
+	}
+	CComQIPtr(const CComQIPtr<T,piid>& lp) throw() :
+		CComPtr<T>(lp.p)
+	{
+	}
+	CComQIPtr(IUnknown* lp) throw()
+	{
+		if (lp != NULL)
+        {
+            if (FAILED(lp->QueryInterface(*piid, (void **)&this->p)))
+                this->p = NULL;
+        }
+	}
+	#ifdef _NATIVE_NULLPTR_SUPPORTED
+	T* operator=(std::nullptr_t) throw()
+    {
+        CComQIPtr(nullptr).Swap(*this);
+        return nullptr;
+    }
+	#endif
+	T* operator=(T* lp) throw()
+	{
+        if(this->p!=lp)
+        {
+            CComQIPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+	T* operator=(const CComQIPtr<T,piid>& lp) throw()
+	{
+        if(this->p!=lp.p)
+        {
+            CComQIPtr(lp).Swap(*this);
+        }
+        return *this;
+	}
+	T* operator=(IUnknown* lp) throw()
+	{
+        if(this->p!=lp)
+        {
+            AtlComQIPtrAssign2((IUnknown**)&this->p, lp, *piid);
+        }
+        return *this;
+	}
 };
 
 //Specialization to make it work
 template<>
-class CComQIPtr<IUnknown, &IID_IUnknown>
+class CComQIPtr<IUnknown, &IID_IUnknown> : public CComPtr<IUnknown>
 {
 public:
-	typedef IUnknown _PtrClass;
-	CComQIPtr()
+	CComQIPtr() throw()
 	{
-		p=NULL;
 	}
-	CComQIPtr(IUnknown* lp)
+	CComQIPtr(IUnknown* lp) throw()
 	{
 		//Actually do a QI to get identity
-		p=NULL;
 		if (lp != NULL)
-			lp->QueryInterface(IID_IUnknown, (void **)&p);
+        {
+            if (FAILED(lp->QueryInterface(__uuidof(IUnknown), (void **)&this->p)))
+                this->p = NULL;
+        }
 	}
-	CComQIPtr(const CComQIPtr<IUnknown,&IID_IUnknown>& lp)
+	CComQIPtr(const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw() :
+		CComPtr<IUnknown>(lp.p)
 	{
-		if ((p = lp.p) != NULL)
-			p->AddRef();
 	}
-	~CComQIPtr()
+	IUnknown* operator=(IUnknown* lp) throw()
 	{
-		if (p)
-			p->Release();
+        if(this->p!=lp)
+        {
+            //Actually do a QI to get identity
+            AtlComQIPtrAssign2((IUnknown**)&this->p, lp, __uuidof(IUnknown));
+        }
+        return *this;
 	}
-	void Release()
-	{
-		IUnknown* pTemp = p;
-		if (pTemp)
-		{
-			p = NULL;
-			pTemp->Release();
-		}
-	}
-	operator IUnknown*() const
-	{
-		return p;
-	}
-	IUnknown& operator*() const
-	{
-		ATLASSERT(p!=NULL);
-		return *p;
-	}
-	//The assert on operator& usually indicates a bug.  If this is really
-	//what is needed, however, take the address of the p member explicitly.
-	IUnknown** operator&()
-	{
-		ATLASSERT(p==NULL);
-		return &p;
-	}
-	_NoAddRefReleaseOnCComPtr<T>* operator->() const
-	{
-		ATLASSERT(p!=NULL);
-		return (_NoAddRefReleaseOnCComPtr<T>*)p;
-	}
-	IUnknown* operator=(IUnknown* lp)
-	{
-		//Actually do a QI to get identity
-		return (IUnknown*)AtlComQIPtrAssign((IUnknown**)&p, lp, IID_IUnknown);
-	}
-	IUnknown* operator=(const CComQIPtr<IUnknown,&IID_IUnknown>& lp)
-	{
-		return (IUnknown*)AtlComPtrAssign((IUnknown**)&p, lp.p);
-	}
-	bool operator!() const
-	{
-		return (p == NULL);
-	}
-	bool operator<(IUnknown* pT) const
-	{
-		return p < pT;
-	}
-	bool operator==(IUnknown* pT) const
-	{
-		return p == pT;
-	}
-	// Compare two objects for equivalence
-	bool IsEqualObject(IUnknown* pOther)
-	{
-		if (p == NULL && pOther == NULL)
-			return true; // They are both NULL objects
 
-		if (p == NULL || pOther == NULL)
-			return false; // One is NULL the other is not
-
-		CComPtr<IUnknown> punk1;
-		CComPtr<IUnknown> punk2;
-		p->QueryInterface(IID_IUnknown, (void**)&punk1);
-		pOther->QueryInterface(IID_IUnknown, (void**)&punk2);
-		return punk1 == punk2;
-	}
-	IUnknown* Detach()
+	IUnknown* operator=(const CComQIPtr<IUnknown,&IID_IUnknown>& lp) throw()
 	{
-		IUnknown* pt = p;
-		p = NULL;
-		return pt;
+        if(this->p!=lp.p)
+        {
+            CComQIPtr(lp).Swap(*this);
+        }
+        return *this;
 	}
-	HRESULT CopyTo(T** ppT)
-	{
-		ATLASSERT(ppT != NULL);
-		if (ppT == NULL)
-			return E_POINTER;
-		*ppT = p;
-		if (p)
-			p->AddRef();
-		return S_OK;
-	}
-	HRESULT SetSite(IUnknown* punkParent)
-	{
-		return AtlSetChildSite(p, punkParent);
-	}
-	HRESULT Advise(IUnknown* pUnk, const IID& iid, LPDWORD pdw)
-	{
-		return AtlAdvise(p, pUnk, iid, pdw);
-	}
-	HRESULT CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
-	{
-		ATLASSERT(p == NULL);
-		return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-	}
-	HRESULT CoCreateInstance(LPCOLESTR szProgID, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
-	{
-		CLSID clsid;
-		HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
-		ATLASSERT(p == NULL);
-		if (SUCCEEDED(hr))
-			hr = ::CoCreateInstance(clsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-		return hr;
-	}
-	template <class Q>
-	HRESULT QueryInterface(Q** pp)
-	{
-		ATLASSERT(pp != NULL && *pp == NULL);
-		return p->QueryInterface(__uuidof(Q), (void**)pp);
-	}
-	IUnknown* p;
 };
+
+typedef CComQIPtr<IDispatch, &__uuidof(IDispatch)> CComDispatchDriver;
 
 #define com_cast CComQIPtr
 
@@ -965,8 +1049,8 @@ public:
 class CComMultiThreadModelNoCS
 {
 public:
-	static ULONG WINAPI Increment(LPLONG p) {return InterlockedIncrement(p);}
-	static ULONG WINAPI Decrement(LPLONG p) {return InterlockedDecrement(p);}
+	static ULONG WINAPI Increment(LPLONG p) {return _InterlockedIncrement(p);}
+	static ULONG WINAPI Decrement(LPLONG p) {return _InterlockedDecrement(p);}
 	typedef CComFakeCriticalSection AutoCriticalSection;
 	typedef CComFakeCriticalSection CriticalSection;
 	typedef CComMultiThreadModelNoCS ThreadModelNoCS;
@@ -975,8 +1059,8 @@ public:
 class CComMultiThreadModel
 {
 public:
-	static ULONG WINAPI Increment(LPLONG p) {return InterlockedIncrement(p);}
-	static ULONG WINAPI Decrement(LPLONG p) {return InterlockedDecrement(p);}
+	static ULONG WINAPI Increment(LPLONG p) {return _InterlockedIncrement(p);}
+	static ULONG WINAPI Decrement(LPLONG p) {return _InterlockedDecrement(p);}
 	typedef CComAutoCriticalSection AutoCriticalSection;
 	typedef CComCriticalSection CriticalSection;
 	typedef CComMultiThreadModelNoCS ThreadModelNoCS;
@@ -1017,11 +1101,13 @@ struct _QIThunk
 {
 	STDMETHOD(QueryInterface)(REFIID iid, void** pp)
 	{
+		ATLASSUME(m_dwRef >= 0);
 		ATLASSERT(m_dwRef >= 0);
 		return pUnk->QueryInterface(iid, pp);
 	}
 	STDMETHOD_(ULONG, AddRef)()
 	{
+		ATLASSUME(m_pUnk != NULL);
 		if (bBreak)
 			DebugBreak();
 		pUnk->AddRef();
@@ -1032,7 +1118,7 @@ struct _QIThunk
 		if (bBreak)
 			DebugBreak();
 		ATLASSERT(m_dwRef >= 0);
-		long l = InterlockedIncrement(&m_dwRef);
+		long l = _InterlockedIncrement(&m_dwRef);
 		ATLTRACE(_T("%d> "), m_dwRef);
 		AtlDumpIID(iid, lpszClassName, S_OK);
 		if (l > m_dwMaxRef)
@@ -2727,7 +2813,7 @@ inline ULONG _QIThunk::Release()
 	if (bBreak)
 		DebugBreak();
 	ATLASSERT(m_dwRef > 0);
-	ULONG l = InterlockedDecrement(&m_dwRef);
+	ULONG l = _InterlockedDecrement(&m_dwRef);
 	ATLTRACE(_T("%d< "), m_dwRef);
 	AtlDumpIID(iid, lpszClassName, S_OK);
 	pUnk->Release();
@@ -5372,25 +5458,45 @@ ATLINLINE ATLAPI AtlInternalQueryInterface(void* pThis,
 /////////////////////////////////////////////////////////////////////////////
 // Smart Pointer helpers
 
+ATLINLINE void AtlComQIPtrAssign2(IUnknown** pp,IUnknown* lp, REFIID riid);
+
 ATLINLINE ATLAPI_(IUnknown*) AtlComPtrAssign(IUnknown** pp, IUnknown* lp)
 {
-	if (lp != NULL)
-		lp->AddRef();
-	if (*pp)
-		(*pp)->Release();
-	*pp = lp;
-	return lp;
+	if (pp == NULL)
+        return NULL;
+
+    if (lp != NULL)
+        lp->AddRef();
+    if (*pp)
+        (*pp)->Release();
+    *pp = lp;
+    return lp;
 }
 
 ATLINLINE ATLAPI_(IUnknown*) AtlComQIPtrAssign(IUnknown** pp, IUnknown* lp, REFIID riid)
 {
-	IUnknown* pTemp = *pp;
-	*pp = NULL;
-	if (lp != NULL)
-		lp->QueryInterface(riid, (void**)pp);
-	if (pTemp)
-		pTemp->Release();
-	return *pp;
+	if (pp == NULL)
+        return NULL;
+
+    IUnknown* pTemp = *pp;
+
+    if (lp == NULL || FAILED(lp->QueryInterface(riid, (void**)pp)))
+        *pp = NULL;
+
+    if (pTemp)
+        pTemp->Release();
+    return *pp;
+}
+
+ATLINLINE void AtlComQIPtrAssign2(IUnknown** pp,IUnknown* lp, REFIID riid)
+{
+    IUnknown* pTemp = *pp; // takes ownership
+
+    if (lp == NULL || FAILED(lp->QueryInterface(riid, (void**)pp)))
+        *pp = NULL;
+
+    if (pTemp)
+        pTemp->Release();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -6132,7 +6238,7 @@ inline HRESULT AtlGetCommCtrlVersion(LPDWORD pdwMajor, LPDWORD pdwMinor)
 		return E_INVALIDARG;
 
 	DLLVERSIONINFO dvi;
-	::ZeroMemory(&dvi, sizeof(dvi));
+	::SecureZeroMemory(&dvi, sizeof(dvi));
 	dvi.cbSize = sizeof(dvi);
 	HRESULT hRet = AtlGetDllVersion(_T("comctl32.dll"), &dvi);
 
@@ -6165,7 +6271,7 @@ inline HRESULT AtlGetShellVersion(LPDWORD pdwMajor, LPDWORD pdwMinor)
 		return E_INVALIDARG;
 
 	DLLVERSIONINFO dvi;
-	::ZeroMemory(&dvi, sizeof(dvi));
+	::SecureZeroMemory(&dvi, sizeof(dvi));
 	dvi.cbSize = sizeof(dvi);
 	HRESULT hRet = AtlGetDllVersion(_T("shell32.dll"), &dvi);
 
