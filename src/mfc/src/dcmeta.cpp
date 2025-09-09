@@ -189,7 +189,8 @@ CSize CMetaFileDC::TabbedTextOut(int x, int y, LPCTSTR lpszString,
 			// calculate next x position based on tab stops
 			if (cxTabStop == 0)
 			{
-				for (int i = 0; i < nTabPositions; i++)
+				int i;
+				for (i = 0; i < nTabPositions; i++)
 				{
 					if (x < lpnTabStopPositions[i]+nTabOrigin)
 					{

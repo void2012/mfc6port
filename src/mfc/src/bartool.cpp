@@ -946,8 +946,8 @@ CSize CToolBar::CalcLayout(DWORD dwMode, int nLength)
 			int nControlCount = 0;
 			BOOL bIsDelayed = m_bDelayedButtonLayout;
 			m_bDelayedButtonLayout = FALSE;
-
-			for (int i = 0; i < nCount; i++)
+			int i;
+			for (i = 0; i < nCount; i++)
 				if ((pData[i].fsStyle & TBSTYLE_SEP) && (pData[i].idCommand != 0))
 					nControlCount++;
 
@@ -956,7 +956,7 @@ CSize CToolBar::CalcLayout(DWORD dwMode, int nLength)
 				pControl = new _AFX_CONTROLPOS[nControlCount];
 				nControlCount = 0;
 
-				for(int i = 0; i < nCount; i++)
+				for(i = 0; i < nCount; i++)
 				{
 					if ((pData[i].fsStyle & TBSTYLE_SEP) && (pData[i].idCommand != 0))
 					{

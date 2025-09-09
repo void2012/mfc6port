@@ -1154,7 +1154,7 @@ public:
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-	static CMenu* PASCAL CMenu::FromHandlePermanent(HMENU hMenu);
+	static CMenu* PASCAL FromHandlePermanent(HMENU hMenu);
 };
 
 /////////////////////////////////////////////////////////////////////////////

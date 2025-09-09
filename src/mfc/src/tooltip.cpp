@@ -75,7 +75,9 @@ BOOL CToolTipCtrl::DestroyToolTipCtrl()
 
 LRESULT CToolTipCtrl::OnAddTool(WPARAM wParam, LPARAM lParam)
 {
-	TOOLINFO ti = *(LPTOOLINFO)lParam;
+	TOOLINFO ti;
+	LPTOOLINFO lpti = (LPTOOLINFO)lParam;
+	memcpy_s(&ti, sizeof(TOOLINFO), lpti, lpti->cbSize);
 	if ((ti.hinst == NULL) && (ti.lpszText != LPSTR_TEXTCALLBACK)
 		&& (ti.lpszText != NULL))
 	{
@@ -84,7 +86,9 @@ LRESULT CToolTipCtrl::OnAddTool(WPARAM wParam, LPARAM lParam)
 			m_mapString.SetAt(ti.lpszText, NULL);
 		// set lpszText to point to the permanent memory associated
 		// with the CString
-		VERIFY(m_mapString.LookupKey(ti.lpszText, ti.lpszText));
+		LPCTSTR lpszText = NULL;
+		VERIFY(m_mapString.LookupKey(ti.lpszText, lpszText));
+		ti.lpszText = const_cast<LPTSTR>(lpszText);
 	}
 	return DefWindowProc(TTM_ADDTOOL, wParam, (LPARAM)&ti);
 }

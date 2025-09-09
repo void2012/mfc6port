@@ -968,14 +968,14 @@ HGLOBAL AFXAPI _AfxOleGetObjectDescriptorData(
 
 		VERIFY(AfxLoadString(AFX_IDS_PASTELINKEDTYPE, szLinkedTypeFmt));
 		lpszLinkedTypeFmt = T2COLE(szLinkedTypeFmt);
-		lpszBuf = (LPOLESTR)CoTaskMemAlloc((ocslen(lpszFullUserTypeName) +
-			ocslen(lpszLinkedTypeFmt) + 1) * sizeof(OLECHAR));
+		int nBuf = (ocslen(lpszFullUserTypeName) + ocslen(lpszLinkedTypeFmt) + 1) * sizeof(OLECHAR);
+		lpszBuf = (LPOLESTR)CoTaskMemAlloc(nBuf);
 		if (lpszBuf != NULL)
 		{
 #ifdef OLE2ANSI
 			sprintf(lpszBuf, lpszLinkedTypeFmt, lpszFullUserTypeName);
 #else
-			swprintf(lpszBuf, lpszLinkedTypeFmt, lpszFullUserTypeName);
+			swprintf(lpszBuf, nBuf, lpszLinkedTypeFmt, lpszFullUserTypeName);
 #endif
 			CoTaskMemFree(lpszFullUserTypeName);
 			lpszFullUserTypeName = lpszBuf;

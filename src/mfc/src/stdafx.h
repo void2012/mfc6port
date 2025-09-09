@@ -16,8 +16,10 @@
 #pragma warning(disable: 4073)  // disable warning about using init_seg
 #endif
 
+#ifndef __clang__
 // MFC inline constructors (including compiler generated) can get deep
 #pragma inline_depth(16)
+#endif
 
 #ifdef _AFX_DEVBUILD
 	#define AFX_IMPL_DATA AFX_DATA_EXPORT

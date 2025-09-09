@@ -95,6 +95,7 @@
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "shlwapi.lib")
 
 // force inclusion of NOLIB.OBJ for /disallowlib directives
 #pragma comment(linker, "/include:__afxForceEXCLUDE")

@@ -1030,22 +1030,7 @@ void CDaoWorkspace::CommitTrans()
 	ASSERT(IsOpen());
 	ASSERT(m_pDAOWorkspace != NULL);
 
-   BYTE bUseDao = _AfxDetermineDaoVersion();
-
-	if (bUseDao == 35 || bUseDao == 36)
-	{
-		// Call DAO 3.5 or 3.6 method with no option set.
-		// CommitTrans option parameter not yet supported.
-		DAO_CHECK(m_pDAOWorkspace->CommitTrans(0));
-	}
-	else
-	{
-		// Call DAO 3.0 method
-		// The DAO 3.0 version of CommitTrans takes no params
-		// so cast CommitTrans to method that takes no params.
-		HRESULT (STDMETHODCALLTYPE DAOWorkspace::*pMethod)() = (HRESULT (STDMETHODCALLTYPE DAOWorkspace::*)())m_pDAOWorkspace->CommitTrans;
-		DAO_CHECK((m_pDAOWorkspace->*pMethod)());
-	}
+	DAO_CHECK(m_pDAOWorkspace->CommitTrans(0));
 }
 
 void CDaoWorkspace::Rollback()
@@ -4420,7 +4405,8 @@ BOOL CDaoRecordset::Seek(LPCTSTR lpszComparison, COleVariant* pKeyArray,
 	COleVariant varComparison(lpszComparison, VT_BSTRT);
 	LPVARIANT pVarArray[13];
 
-	for (WORD nIndex = 0; nIndex < nKeys; nIndex++)
+	WORD nIndex;
+	for (nIndex = 0; nIndex < nKeys; nIndex++)
 		pVarArray[nIndex] = &pKeyArray[nIndex];
 
 	for (;nIndex < 13; nIndex++)
@@ -5389,43 +5375,17 @@ void AFX_CDECL AfxSetFieldInfo(DAOField* pDAOField, CDaoFieldInfo& fieldinfo)
 void AFX_CDECL AfxGetDefaultValue(DAOField* pDAOField, CString& strDefaultValue)
 {
 	COleVariant var;
-	BYTE bUseDao = _AfxDetermineDaoVersion();
 
-	if (bUseDao == 35 || bUseDao == 36)
-	{
-		// Call the DAO 3.5/3.6 method
-		DAO_CHECK(pDAOField->get_DefaultValue(&var));
-	}
-	else
-	{
-		// Call DAO 3.0 method
-		// get_DefaultValue takes BSTR* param not VARIANT*
-		HRESULT (STDMETHODCALLTYPE DAOField::*pMethod)(BSTR*) = (HRESULT (STDMETHODCALLTYPE DAOField::*)(BSTR*))pDAOField->get_DefaultValue;
-		DAO_CHECK((pDAOField->*pMethod)(&V_BSTR(&var)));
-		var.vt = VT_BSTR;
-	}
+	DAO_CHECK(pDAOField->get_DefaultValue(&var));
 
 	strDefaultValue = V_BSTRT(&var);
-	var.Clear();
 }
 
 void AFX_CDECL AfxSetDefaultValue(DAOField* pDAOField, CString& strDefaultValue)
 {
 	COleVariant var(strDefaultValue, VT_BSTRT);
-	BYTE bUseDao = _AfxDetermineDaoVersion();
 
-	if (bUseDao == 35 || bUseDao == 36)
-	{
-		// Call DAO 3.5/3.6 version
-		DAO_CHECK(pDAOField->put_DefaultValue(var));
-	}
-	else
-	{
-		// Call DAO 3.0 method
-		// put_DefaultValue takes BSTR param not VARIANT
-		HRESULT (STDMETHODCALLTYPE DAOField::*pMethod)(BSTR) = (HRESULT (STDMETHODCALLTYPE DAOField::*)(BSTR))pDAOField->put_DefaultValue;
-		DAO_CHECK((pDAOField->*pMethod)(V_BSTR(&var)));
-	}
+	DAO_CHECK(pDAOField->put_DefaultValue(var));
 }
 
 void AFX_CDECL AfxGetIndexInfo(DAOIndex* pDAOIndex, CDaoIndexInfo& indexinfo,
@@ -5769,9 +5729,6 @@ void AFXAPI AfxDaoInit()
 	if (pApp != NULL)
 		pApp->m_lpfnDaoTerm = AfxDaoTerm;
 
-	BYTE bUseDao = _AfxDetermineDaoVersion();
-
-	CLSID clsidEngine;
 	COleVariant varKey;
 	GUID guidEngine;
 
@@ -5785,39 +5742,8 @@ void AFXAPI AfxDaoInit()
 	// DAO 3.5 and 3.6 runtime key
 	varKey = _T("mbmabptebkjcdlgtjmskjwtsdhjbmkmwtrak");
 
-	switch (bUseDao)
-	{
-		case 35:
-			// Use DAO 3.5
-			clsidEngine = CLSID35_CDAODBEngine;
-			break;
-
-		case 30:
-			// Use DAO 3.0
-			clsidEngine = CLSID30_CDAODBEngine;
-
-			// DAO 3.0 runtime key
-			varKey = _T("mjgcqcejfchcijecpdhckcdjqigdejfccjri");
-
-			// Set the interface type
-#ifdef _UNICODE
-			guidEngine = IID30_IDAODBEngineW;
-#else
-			guidEngine = IID30_IDAODBEngine;
-#endif
-			break;
-
-		case 36:
-			// Use DAO 3.6
-			clsidEngine = CLSID_CDAODBEngine;
-			break;
-
-		default:
-			ASSERT(FALSE);
-	}
-
 	LPCLASSFACTORY2 pCF2;
-	DAO_CHECK_ERROR(::CoGetClassObject(clsidEngine,
+	DAO_CHECK_ERROR(::CoGetClassObject(CLSID_CDAODBEngine,
 		CLSCTX_INPROC_SERVER, NULL, IID_IClassFactory2, (LPVOID*)&pCF2),
 		AFX_DAO_ERROR_ENGINE_INITIALIZATION);
 

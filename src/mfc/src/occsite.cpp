@@ -2431,7 +2431,8 @@ void CDataSourceControl::BindColumns()
 		m_pValues = NULL;
 	}
 	m_nBindings = 0;
-	for (int nCol=0; nCol<m_nColumns; nCol++)
+	int nCol;
+	for (nCol=0; nCol<m_nColumns; nCol++)
 	{
 		m_nBindings += m_pMetaRowData[nCol].m_pClientList->GetCount();
 	}

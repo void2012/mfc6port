@@ -1045,7 +1045,8 @@ void CSplitterWnd::GetHitRect(int ht, CRect& rectHit)
 	{
 		cy = m_cySplitter - (2*m_cyBorder - afxData.bWin4);
 		m_ptTrackOffset.y = -(cy / 2);
-		for (int row = 0; row < ht - vSplitterBar1; row++)
+		int row;
+		for (row = 0; row < ht - vSplitterBar1; row++)
 			y += m_pRowInfo[row].nCurSize + m_cySplitterGap;
 		m_rectLimit.top = y;
 		y += m_pRowInfo[row].nCurSize + m_cyBorderShare + afxData.bWin4;
@@ -1055,7 +1056,8 @@ void CSplitterWnd::GetHitRect(int ht, CRect& rectHit)
 	{
 		cx = m_cxSplitter - (2*m_cxBorder - afxData.bWin4);
 		m_ptTrackOffset.x = -(cx / 2);
-		for (int col = 0; col < ht - hSplitterBar1; col++)
+		int col;
+		for (col = 0; col < ht - hSplitterBar1; col++)
 			x += m_pColInfo[col].nCurSize + m_cxSplitterGap;
 		m_rectLimit.left = x;
 		x += m_pColInfo[col].nCurSize + m_cxBorderShare + afxData.bWin4;
@@ -1100,7 +1102,8 @@ int CSplitterWnd::HitTest(CPoint pt) const
 	// for hit detect, include the border of splitters
 	CRect rect;
 	rect = rectClient;
-	for (int col = 0; col < m_nCols - 1; col++)
+	int col;
+	for (col = 0; col < m_nCols - 1; col++)
 	{
 		rect.left += m_pColInfo[col].nCurSize;
 		rect.right = rect.left + m_cxSplitterGap;
@@ -1110,7 +1113,8 @@ int CSplitterWnd::HitTest(CPoint pt) const
 	}
 
 	rect = rectClient;
-	for (int row = 0; row < m_nRows - 1; row++)
+	int row;
+	for (row = 0; row < m_nRows - 1; row++)
 	{
 		rect.top += m_pRowInfo[row].nCurSize;
 		rect.bottom = rect.top + m_cySplitterGap;
@@ -1493,11 +1497,14 @@ void CSplitterWnd::DrawAllSplitBars(CDC* pDC, int cxInside, int cyInside)
 {
 	ASSERT_VALID(this);
 
+	int col;
+	int row;
+
 	// draw column split bars
 	CRect rect;
 	GetClientRect(rect);
 	rect.left += m_cxBorder;
-	for (int col = 0; col < m_nCols - 1; col++)
+	for (col = 0; col < m_nCols - 1; col++)
 	{
 		rect.left += m_pColInfo[col].nCurSize + m_cxBorderShare;
 		rect.right = rect.left + m_cxSplitter;
@@ -1510,7 +1517,7 @@ void CSplitterWnd::DrawAllSplitBars(CDC* pDC, int cxInside, int cyInside)
 	// draw row split bars
 	GetClientRect(rect);
 	rect.top += m_cyBorder;
-	for (int row = 0; row < m_nRows - 1; row++)
+	for (row = 0; row < m_nRows - 1; row++)
 	{
 		rect.top += m_pRowInfo[row].nCurSize + m_cyBorderShare;
 		rect.bottom = rect.top + m_cySplitter;

@@ -635,7 +635,7 @@ QueryAgain:
 		{
 			CString strKey;
 			CString strCLSID = AfxStringFromCLSID(clsidFile);
-			strKey.Format(_T("CLSID\\%s\\DocObject"), strCLSID);
+			strKey.Format(_T("CLSID\\%s\\DocObject"), static_cast<LPCTSTR>(strCLSID));
 
 			HKEY hKey;
 			if (ERROR_SUCCESS ==
@@ -1293,7 +1293,8 @@ OLEUIPASTEFLAG COlePasteSpecialDialog::AddLinkEntry(UINT cf)
 {
 	ASSERT_VALID(this);
 	ASSERT(m_ps.cLinkTypes <= 8);
-	for (int i = 0; i < m_ps.cLinkTypes; i++)
+	int i;
+	for (i = 0; i < m_ps.cLinkTypes; i++)
 	{
 		if (m_ps.arrLinkTypes[i] == cf)
 			break;

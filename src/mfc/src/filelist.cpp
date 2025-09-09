@@ -152,7 +152,8 @@ void CRecentFileList::Add(LPCTSTR lpszPathName)
 	AfxFullPath(szTemp, lpszPathName);
 
 	// update the MRU list, if an existing MRU string matches file name
-	for (int iMRU = 0; iMRU < m_nSize-1; iMRU++)
+	int iMRU;
+	for (iMRU = 0; iMRU < m_nSize-1; iMRU++)
 	{
 		if (AfxComparePath(m_arrNames[iMRU], szTemp))
 			break;      // iMRU will point to matching entry
@@ -174,7 +175,8 @@ void CRecentFileList::Remove(int nIndex)
 	ASSERT(nIndex < m_nSize);
 
 	m_arrNames[nIndex].Empty();
-	for (int iMRU = nIndex; iMRU < m_nSize-1; iMRU++)
+	int iMRU;
+	for (iMRU = nIndex; iMRU < m_nSize-1; iMRU++)
 		m_arrNames[iMRU] = m_arrNames[iMRU+1];
 
 	ASSERT(iMRU < m_nSize);
@@ -245,7 +247,8 @@ void CRecentFileList::UpdateMenu(CCmdUI* pCmdUI)
 	if (pCmdUI->m_pMenu == NULL)
 		return;
 
-	for (int iMRU = 0; iMRU < m_nSize; iMRU++)
+	int iMRU;
+	for (iMRU = 0; iMRU < m_nSize; iMRU++)
 		pCmdUI->m_pMenu->DeleteMenu(pCmdUI->m_nID + iMRU, MF_BYCOMMAND);
 
 	TCHAR szCurDir[_MAX_PATH];

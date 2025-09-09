@@ -447,10 +447,10 @@ protected:
 // mirroring support
 
 //WINBUG: some mirroring stuff will be in wingdi.h someday
-#ifndef LAYOUT_RTL
+#ifndef LAYOUT_LTR
 #define LAYOUT_LTR                               0x00000000
-#define LAYOUT_RTL                         0x00000001
-#define NOMIRRORBITMAP                     0x80000000
+// #define LAYOUT_RTL                         0x00000001
+// #define NOMIRRORBITMAP                     0x80000000
 #endif
 
 //WINBUG: some mirroring stuff will be in winuser.h someday

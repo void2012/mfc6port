@@ -230,7 +230,7 @@ public:
 	// Invoke a method by DISPID with N parameters
 	HRESULT InvokeN(DISPID dispid, VARIANT* pvarParams, int nParams, VARIANT* pvarRet = NULL)
 	{
-		DISPPARAMS dispparams = { pvarParams, NULL, nParams, 0};
+		DISPPARAMS dispparams = { pvarParams, NULL, static_cast<UINT>(nParams), 0};
 		return p->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &dispparams, pvarRet, NULL, NULL);
 	}
 	// Invoke a method by name with Nparameters
@@ -2279,7 +2279,7 @@ class CComObjectRootEx : public CComObjectRootBase
 {
 public:
 	typedef ThreadModel _ThreadModel;
-	typedef _ThreadModel::AutoCriticalSection _CritSec;
+	typedef typename _ThreadModel::AutoCriticalSection _CritSec;
 	typedef CComObjectLockT<_ThreadModel> ObjectLock;
 
 	ULONG InternalAddRef()
@@ -2629,7 +2629,7 @@ public:
 template <class contained>
 class CComAggObject :
 	public IUnknown,
-	public CComObjectRootEx< contained::_ThreadModel::ThreadModelNoCS >
+	public CComObjectRootEx<typename contained::_ThreadModel::ThreadModelNoCS >
 {
 public:
 	typedef contained _BaseClass;
@@ -2721,7 +2721,7 @@ public:
 template <class contained>
 class CComPolyObject :
 	public IUnknown,
-	public CComObjectRootEx< contained::_ThreadModel::ThreadModelNoCS >
+	public CComObjectRootEx<typename contained::_ThreadModel::ThreadModelNoCS >
 {
 public:
 	typedef contained _BaseClass;
@@ -2848,7 +2848,7 @@ public:
 template <class contained>
 class CComCachedTearOffObject :
 	public IUnknown,
-	public CComObjectRootEx<contained::_ThreadModel::ThreadModelNoCS>
+	public CComObjectRootEx<typename contained::_ThreadModel::ThreadModelNoCS>
 {
 public:
 	typedef contained _BaseClass;
@@ -3247,7 +3247,8 @@ public:
 			for (int i=0; i<(int)cNames; i++)
 			{
 				int n = ocslen(rgszNames[i]);
-				for (int j=m_nCount-1; j>=0; j--)
+				int j;
+				for (j=m_nCount-1; j>=0; j--)
 				{
 					if ((n == m_pMap[j].nLen) &&
 						(memcmp(m_pMap[j].bstr, rgszNames[i], m_pMap[j].nLen * sizeof(OLECHAR)) == 0))
@@ -3310,7 +3311,7 @@ inline HRESULT CComTypeInfoHolder::GetTI(LCID lcid)
 {
 	//If this assert occurs then most likely didn't initialize properly
 	ATLASSERT(m_plibid != NULL && m_pguid != NULL);
-	ATLASSERT(!InlineIsEqualGUID(*m_plibid, GUID_NULL) && "Did you forget to pass the LIBID to CComModule::Init?");
+	ATLASSERT(!ATL::InlineIsEqualGUID(*m_plibid, GUID_NULL) && "Did you forget to pass the LIBID to CComModule::Init?");
 
 	if (m_pInfo != NULL)
 		return S_OK;
@@ -3982,7 +3983,7 @@ protected:
 
 
 template <UINT nID, class T, const IID* piid, const GUID* plibid, WORD wMajor, WORD wMinor, class tihclass>
-IDispEventImpl<nID, T, piid, plibid, wMajor, wMinor, tihclass>::_tihclass
+typename IDispEventImpl<nID, T, piid, plibid, wMajor, wMinor, tihclass>::_tihclass
 IDispEventImpl<nID, T, piid, plibid, wMajor, wMinor, tihclass>::_tih =
 	{piid, plibid, wMajor, wMinor, NULL, 0, NULL, 0};
 
@@ -4052,7 +4053,7 @@ protected:
 };
 
 template <class T, const IID* piid, const GUID* plibid, WORD wMajor, WORD wMinor, class tihclass>
-IDispatchImpl<T, piid, plibid, wMajor, wMinor, tihclass>::_tihclass
+typename IDispatchImpl<T, piid, plibid, wMajor, wMinor, tihclass>::_tihclass
 IDispatchImpl<T, piid, plibid, wMajor, wMinor, tihclass>::_tih =
 {piid, plibid, wMajor, wMinor, NULL, 0, NULL, 0};
 
@@ -4076,7 +4077,7 @@ protected:
 };
 
 template <const CLSID* pcoclsid, const GUID* plibid, WORD wMajor, WORD wMinor, class tihclass>
-IProvideClassInfoImpl<pcoclsid, plibid, wMajor, wMinor, tihclass>::_tihclass
+typename IProvideClassInfoImpl<pcoclsid, plibid, wMajor, wMinor, tihclass>::_tihclass
 IProvideClassInfoImpl<pcoclsid, plibid, wMajor, wMinor, tihclass>::_tih =
 {pcoclsid,plibid, wMajor, wMinor, NULL, 0, NULL, 0};
 
@@ -4113,7 +4114,7 @@ protected:
 
 
 template <const CLSID* pcoclsid, const IID* psrcid, const GUID* plibid, WORD wMajor, WORD wMinor, class tihclass>
-IProvideClassInfo2Impl<pcoclsid, psrcid, plibid, wMajor, wMinor, tihclass>::_tihclass
+typename IProvideClassInfo2Impl<pcoclsid, psrcid, plibid, wMajor, wMinor, tihclass>::_tihclass
 IProvideClassInfo2Impl<pcoclsid, psrcid, plibid, wMajor, wMinor, tihclass>::_tih =
 {pcoclsid,plibid, wMajor, wMinor, NULL, 0, NULL, 0};
 
@@ -4433,7 +4434,7 @@ public:
 //Data
 	CComPtr<IUnknown> m_spUnk;
 	CollType* m_pcollection;
-	CollType::iterator m_iter;
+	typename CollType::iterator m_iter;
 };
 
 template <class Base, const IID* piid, class T, class Copy, class CollType>

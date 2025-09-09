@@ -306,13 +306,13 @@ private:
 }; // class _CIP
 
 template<class _Interface, const IID* _IID>
-_CIP<_Interface, _IID>::_CIP<_Interface, _IID>()
+_CIP<_Interface, _IID>::_CIP()
 	: _pInterface(NULL)
 {
 }
 
 template<class _Interface, const IID* _IID>
-_CIP<_Interface, _IID>::~_CIP<_Interface, _IID>()
+_CIP<_Interface, _IID>::~_CIP()
 {
 	// If we still have an interface then Release() it.  The interface
 	// may be NULL if Detach() has previosly been called, or if it was

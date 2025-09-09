@@ -152,7 +152,7 @@ CDumpContext& AFXAPI operator <<(CDumpContext& dc, CTime time)
 {
 	char* psz = ctime(&time.m_time);
 	if ((psz == NULL) || (time.m_time == 0))
-		return dc << "CTime(invalid #" << time.m_time << ")";
+		return dc << "CTime(invalid #" << (DWORD) time.m_time << ")";
 
 	// format it
 	psz[24] = '\0';         // nuke newline

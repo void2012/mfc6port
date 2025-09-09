@@ -773,8 +773,8 @@ CList<TYPE, ARG_TYPE>::~CList()
 //
 
 template<class TYPE, class ARG_TYPE>
-CList<TYPE, ARG_TYPE>::CNode*
-CList<TYPE, ARG_TYPE>::NewNode(CList::CNode* pPrev, CList::CNode* pNext)
+typename CList<TYPE, ARG_TYPE>::CNode*
+CList<TYPE, ARG_TYPE>::NewNode(CNode* pPrev, CNode* pNext)
 {
 	if (m_pNodeFree == NULL)
 	{
@@ -806,7 +806,7 @@ CList<TYPE, ARG_TYPE>::NewNode(CList::CNode* pPrev, CList::CNode* pNext)
 }
 
 template<class TYPE, class ARG_TYPE>
-void CList<TYPE, ARG_TYPE>::FreeNode(CList::CNode* pNode)
+void CList<TYPE, ARG_TYPE>::FreeNode(CNode* pNode)
 {
 	DestructElements<TYPE>(&pNode->data, 1);
 	pNode->pNext = m_pNodeFree;
@@ -1273,7 +1273,7 @@ CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::~CMap()
 }
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
-CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CAssoc*
+typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CAssoc*
 CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::NewAssoc()
 {
 	if (m_pFreeList == NULL)
@@ -1302,7 +1302,7 @@ CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::NewAssoc()
 }
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
-void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::FreeAssoc(CMap::CAssoc* pAssoc)
+void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::FreeAssoc(CAssoc* pAssoc)
 {
 	DestructElements<VALUE>(&pAssoc->value, 1);
 	DestructElements<KEY>(&pAssoc->key, 1);
@@ -1317,7 +1317,7 @@ void CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::FreeAssoc(CMap::CAssoc* pAssoc)
 }
 
 template<class KEY, class ARG_KEY, class VALUE, class ARG_VALUE>
-CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CAssoc*
+typename CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::CAssoc*
 CMap<KEY, ARG_KEY, VALUE, ARG_VALUE>::GetAssocAt(ARG_KEY key, UINT& nHash) const
 // find association (or return NULL)
 {
@@ -1632,15 +1632,15 @@ public:
 		: _CTypedPtrList<CObList, CObList*>(nBlockSize) { }
 
 	// add before head or after tail
-	POSITION AddHead(TYPE newElement)
+	POSITION AddHead(CObList* newElement)
 		{ return _CTypedPtrList<CObList, CObList*>::AddHead((CObject*)newElement); }
-	POSITION AddTail(TYPE newElement)
+	POSITION AddTail(CObList* newElement)
 		{ return _CTypedPtrList<CObList, CObList*>::AddTail((CObject*)newElement); }
 
 	// add another list of elements before head or after tail
-	void AddHead(CTypedPtrList<BASE_CLASS, TYPE>* pNewList)
+	void AddHead(CTypedPtrList<CObList, CObList*>* pNewList)
 		{ _CTypedPtrList<CObList, CObList*>::AddHead(pNewList); }
-	void AddTail(CTypedPtrList<BASE_CLASS, TYPE>* pNewList)
+	void AddTail(CTypedPtrList<CObList, CObList*>* pNewList)
 		{ _CTypedPtrList<CObList, CObList*>::AddTail(pNewList); }
 };
 
@@ -1654,15 +1654,15 @@ public:
 		: _CTypedPtrList<CPtrList, CPtrList*>(nBlockSize) { }
 
 	// add before head or after tail
-	POSITION AddHead(TYPE newElement)
+	POSITION AddHead(CPtrList* newElement)
 		{ return _CTypedPtrList<CPtrList, CPtrList*>::AddHead((void*)newElement); }
-	POSITION AddTail(TYPE newElement)
+	POSITION AddTail(CPtrList* newElement)
 		{ return _CTypedPtrList<CPtrList, CPtrList*>::AddTail((void*)newElement); }
 
 	// add another list of elements before head or after tail
-	void AddHead(CTypedPtrList<BASE_CLASS, TYPE>* pNewList)
+	void AddHead(CTypedPtrList<CPtrList, CPtrList*>* pNewList)
 		{ _CTypedPtrList<CPtrList, CPtrList*>::AddHead(pNewList); }
-	void AddTail(CTypedPtrList<BASE_CLASS, TYPE>* pNewList)
+	void AddTail(CTypedPtrList<CPtrList, CPtrList*>* pNewList)
 		{ _CTypedPtrList<CPtrList, CPtrList*>::AddTail(pNewList); }
 };
 
@@ -1679,11 +1679,11 @@ public:
 		: BASE_CLASS(nBlockSize) { }
 
 	// Lookup
-	BOOL Lookup(BASE_CLASS::BASE_ARG_KEY key, VALUE& rValue) const
+	BOOL Lookup(typename BASE_CLASS::BASE_ARG_KEY key, VALUE& rValue) const
 		{ return BASE_CLASS::Lookup(key, (BASE_CLASS::BASE_VALUE&)rValue); }
 
 	// Lookup and add if not there
-	VALUE& operator[](BASE_CLASS::BASE_ARG_KEY key)
+	VALUE& operator[](typename BASE_CLASS::BASE_ARG_KEY key)
 		{ return (VALUE&)BASE_CLASS::operator[](key); }
 
 	// add a new key (key, value) pair

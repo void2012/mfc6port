@@ -294,6 +294,25 @@ TARGDEFS=$(TARGDEFS) /D_MBCS
 !endif
 !endif
 
+# from SDK
+# warning C4005: macro-redefentions
+# warning C4091: 'typedef ': ignored on left of 'tagGPFIDL_FLAGS' when no variable is declared 
+
+# mfc
+# warning C4456: declaration of 'identifier' hides previous local declaration
+# warning C4457: declaration of 'identifier' hides function parameter
+# warning C4458: declaration of 'identifier' hides class member
+# warning C4302: 'conversion' : truncation from 'type 1' to 'type 2'
+# warning C4244: 'argument' : conversion from 'type1' to 'type2', possible loss of data
+# warning C4293: 'operator' : shift count negative or too big, undefined behavior
+
+# warning C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+# warning C4838: conversion from 'unsigned long' to 'SCODE' requires a narrowing conversion
+
+# for clang (not all)
+# -Wno-pragma-pack -Wno-overloaded-virtual -Wno-unused-variable -Wno-sign-compare -Wno-enum-compare -Wno-extern-initializer -Wno-implicit-exception-spec-mismatch
+TARGDEFS=$(TARGDEFS) /D_CRT_SECURE_NO_WARNINGS /D_AFX_NO_CTL3D_SUPPORT /wd4005 /wd4091 /wd4456 /wd4457 /wd4458 /wd4302 /wd4244 /wd4293 /wd4430 /wd4838
+
 !if "$(DLL)" == "2" && "$(BROWSEONLY)" != "1"
 !if "$(TARG)" == ""
 !error DLL=2 is used only from MFCDLL.MAK, MFCOLE.MAK, or MFCDB.MAK

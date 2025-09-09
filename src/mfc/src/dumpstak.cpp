@@ -26,7 +26,7 @@ static DWORD __stdcall GetModuleBase(HANDLE hProcess, DWORD dwReturnAddress);
 #define MODULE_NAME_LEN 64
 #define SYMBOL_NAME_LEN 128
 
-struct SYMBOL_INFO
+struct _ATL_SYMBOL_INFO
 {
 	DWORD dwAddress;
 	DWORD dwOffset;
@@ -76,7 +76,7 @@ static DWORD __stdcall GetModuleBase(HANDLE hProcess, DWORD dwReturnAddress)
 }
 
 static BOOL ResolveSymbol(HANDLE hProcess, DWORD dwAddress,
-	SYMBOL_INFO &siSymbol)
+	_ATL_SYMBOL_INFO &siSymbol)
 {
 	BOOL fRetval = TRUE;
 
@@ -92,7 +92,7 @@ static BOOL ResolveSymbol(HANDLE hProcess, DWORD dwAddress,
 	LPSTR pszSymbol = NULL;
 	IMAGEHLP_MODULE mi;
 
-	memset(&siSymbol, 0, sizeof(SYMBOL_INFO));
+	memset(&siSymbol, 0, sizeof(_ATL_SYMBOL_INFO));
 	mi.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
 
 	if (!SymGetModuleInfo(hProcess, dwAddress, &mi))
@@ -356,7 +356,7 @@ void AFXAPI AfxDumpStack(DWORD dwTarget /* = AFX_STACK_DUMP_TARGET_DEFAULT */)
 	int cAddresses = adwAddress.GetSize();
 	for (nAddress = 0; nAddress < cAddresses; nAddress++)
 	{
-		SYMBOL_INFO info;
+		_ATL_SYMBOL_INFO info;
 		DWORD dwAddress = adwAddress[nAddress];
 
 		char sz[20];

@@ -178,9 +178,10 @@ BOOL CStatusBar::SetIndicators(const UINT* lpIDArray, int nIDCount)
 
 BOOL CStatusBar::AllocElements(int nElements, int cbElement)
 {
+	int i;
 	// destruct old elements
 	AFX_STATUSPANE* pSBP = _GetPanePtr(0);
-	for (int i = 0; i < m_nCount; i++)
+	for (i = 0; i < m_nCount; i++)
 	{
 		pSBP->strText.~CString();
 		++pSBP;
@@ -227,6 +228,7 @@ void CStatusBar::UpdateAllPanes(BOOL bUpdateRects, BOOL bUpdateText)
 {
 	ASSERT_VALID(this);
 	ASSERT(::IsWindow(m_hWnd));
+	int i;
 
 	// update the status pane locations
 	if (bUpdateRects)
@@ -242,7 +244,7 @@ void CStatusBar::UpdateAllPanes(BOOL bUpdateRects, BOOL bUpdateText)
 		int cxExtra = rect.Width() + rgBorders[2];
 		int nStretchyCount = 0;
 		AFX_STATUSPANE* pSBP = _GetPanePtr(0);
-		for (int i = 0; i < m_nCount; i++)
+		for (i = 0; i < m_nCount; i++)
 		{
 			if (pSBP->nStyle & SBPS_STRETCH)
 				++nStretchyCount;

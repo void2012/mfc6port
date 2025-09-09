@@ -648,7 +648,8 @@ SCODE CCmdTarget::PushStackArgs(BYTE* pStack, const BYTE* pbParams,
 	int iArgMin = pDispParams->cNamedArgs;
 
 	ASSERT(pbParams != NULL);
-	for (const BYTE* pb = pbParams; *pb != '\0'; ++pb)
+	const BYTE* pb;
+	for (pb = pbParams; *pb != '\0'; ++pb)
 	{
 		--iArg; // move to next arg
 

@@ -64,11 +64,13 @@ AFX_STATIC long AFXAPI _AfxMultMultDivDiv(
 #endif
 
 	temp = numerator < 0 ? -numerator : numerator;
-	for (int nBitsInNum = 0; temp != 0; nBitsInNum++)
+	int nBitsInNum;
+	for (nBitsInNum = 0; temp != 0; nBitsInNum++)
 		temp >>= 1;
 
 	temp = factor < 0 ? -factor : factor;
-	for (int nBitsInFactor = 0; temp != 0; nBitsInFactor++)
+	int nBitsInFactor;
+	for (nBitsInFactor = 0; temp != 0; nBitsInFactor++)
 		temp >>= 1;
 
 	nBitsInNum += nBitsInFactor;

@@ -64,7 +64,7 @@ void AFXAPI AfxThrowDBException(RETCODE nRetCode, CDatabase* pdb, HSTMT hstmt)
 	{
 		VERIFY(pException->m_strError.LoadString(
 			AFX_IDP_SQL_FIRST+(nRetCode-AFX_SQL_ERROR)));
-		TRACE1("%s\n", pException->m_strError);
+		TRACE1("%s\n", static_cast<LPCTSTR>(pException->m_strError));
 	}
 	THROW(pException);
 }
@@ -166,16 +166,16 @@ void CDBException::TraceErrorMessage(LPCTSTR szTrace) const
 	CString strTrace = szTrace;
 
 	if (strTrace.GetLength() <= 80)
-		TRACE1("%s\n", strTrace);
+		TRACE1("%s\n", static_cast<LPCTSTR>(strTrace));
 	else
 	{
 		// Display 80 chars/line
 		while (strTrace.GetLength() > 80)
 		{
-			TRACE1("%s\n", strTrace.Left(80));
+			TRACE1("%s\n", static_cast<LPCTSTR>(strTrace.Left(80)));
 			strTrace = strTrace.Right(strTrace.GetLength() - 80);
 		}
-		TRACE1("%s\n", strTrace);
+		TRACE1("%s\n", static_cast<LPCTSTR>(strTrace));
 	}
 }
 #endif // _DEBUG
@@ -888,13 +888,13 @@ void CDatabase::GetConnectInfo()
 		if (Check(nRetCode))
 		{
 			CString strInfo = szInfo;
-			TRACE1("DBMS: %s\n", strInfo);
+			TRACE1("DBMS: %s\n", static_cast<LPCTSTR>(strInfo));
 			AFX_SQL_SYNC(::SQLGetInfo(m_hdbc, SQL_DBMS_VER,
 				szInfo, _countof(szInfo), &nResult));
 			if (Check(nRetCode))
 			{
 				strInfo = szInfo;
-				TRACE1(", Version: %s\n", strInfo);
+				TRACE1(", Version: %s\n", static_cast<LPCTSTR>(strInfo));
 			}
 		}
 	}
@@ -3706,7 +3706,8 @@ int CRecordset::GetBoundParamIndex(void* pv)
 
 short CRecordset::GetFieldIndexByName(LPCTSTR lpszFieldName)
 {
-	for (short nIndex = 0; nIndex < GetODBCFieldCount(); nIndex++)
+	short nIndex;
+	for (nIndex = 0; nIndex < GetODBCFieldCount(); nIndex++)
 	{
 		if (m_rgODBCFieldInfos[nIndex].m_strName == lpszFieldName)
 			break;
